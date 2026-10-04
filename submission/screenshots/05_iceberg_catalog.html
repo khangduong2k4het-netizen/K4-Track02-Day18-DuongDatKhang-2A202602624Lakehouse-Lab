@@ -1,0 +1,68 @@
+<!doctype html><meta charset="utf-8"><style>body{font:16px Arial;margin:32px;color:#172033}pre{font:14px Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5fa;padding:18px;border:1px solid #d5dce7}h1{color:#174ea6}</style><h1>05_iceberg_catalog</h1><p>Browser screenshot of preserved Jupyter execution outputs. Source: submission/notebooks/05_iceberg_catalog.ipynb. Local HTML export; not the live Jupyter UI.</p><h3>Cell 2 — execution 1</h3><pre>Catalog: SqlCatalog   namespaces: [(&#x27;lake&#x27;,)]
+</pre><h3>Cell 4 — execution 2</h3><pre>Created (&#x27;lake&#x27;, &#x27;llm_events&#x27;)
+  location:  file://C:\Users\khang\Downloads\gitlabVin\K4-Track02-Day18-DuongDatKhang-2A202602624Lakehouse-Lab\_lakehouse\iceberg\nb5\warehouse/lake/llm_events
+  metadata:  00000-55a0aaa1-3630-4b03-be4e-26ae8e45da62.metadata.json
+  format-v2
+</pre><h3>Cell 6 — execution 3</h3><pre>Partition spec: [
+  1000: ts_day: day(2)
+]
+
+Note: &#x27;ts_day&#x27; is NOT a column you insert. It is derived from ts.
+</pre><h3>Cell 8 — execution 4</h3><pre>Rows:      5,000
+Snapshots: 10   (one per commit)
+Data files: 10
+</pre><h3>Cell 10 — execution 5</h3><pre>Files to read, no filter:    10
+Files to read, one-day filter: 1
+→ Pruning ratio: 10×   (target ≥ 5×)
+  rows returned: 500
+</pre><h3>Cell 12 — execution 6</h3><pre>Hive user who forgets `WHERE dt=...`:  reads 10 files
+Iceberg user filtering on `ts`:        reads 1 files
+
+At 512 MB/file and $5/TB scanned:
+  wasted per query: 4.5 GB  =  $0.022
+  × 10,000 queries/day  =  $220/day
+
+That is the bill for one forgotten predicate. Hidden partitioning removes
+the opportunity to forget.
+</pre><h3>Cell 14 — execution 7</h3><pre>Tier 1  metadata.json     : 00011-7444c613-0cd4-4cb0-ab95-42d515d3dd1a.metadata.json
+Tier 2  manifest lists    : 10 (one per snapshot)
+Tier 3  manifest files    : 10
+        data files        : 10
+
+Metadata log entries: 12
+Partitions tracked  : 10
+</pre><h3>Cell 16 — execution 8</h3><pre>data/        47.3 KB   (10 parquet files)
+metadata/   138.6 KB   (20 avro + 12 json)
+→ metadata is 293.1% of table size
+
+At 10 rows/file this looks absurd. At 512 MB/file it is ~0.1%.
+Small files punish you TWICE: more data files AND more metadata to plan over.
+</pre><h3>Cell 18 — execution 9</h3><pre>Field IDs before: [(1, &#x27;event_id&#x27;), (2, &#x27;ts&#x27;), (3, &#x27;model&#x27;), (4, &#x27;latency_ms&#x27;), (5, &#x27;cost_usd&#x27;)]
+Field IDs after : [(1, &#x27;event_id&#x27;), (2, &#x27;ts&#x27;), (3, &#x27;model&#x27;), (4, &#x27;latency_millis&#x27;), (5, &#x27;cost_usd&#x27;), (6, &#x27;tier&#x27;)]
+
+latency_ms → latency_millis kept field_id=4: a rename rewrote NO data.
+Old rows read back with tier=NULL — no backfill, no migration job.
+</pre><h3>Cell 19 — execution 10</h3><pre>Rows still readable: 5,000
+Columns now: [&#x27;event_id&#x27;, &#x27;ts&#x27;, &#x27;model&#x27;, &#x27;latency_millis&#x27;, &#x27;cost_usd&#x27;, &#x27;tier&#x27;]
+tier nulls: 5,000 (all pre-existing rows)
+</pre><h3>Cell 21 — execution 11</h3><pre>snapshot[0]  7044897187013824463: 500 rows
+snapshot[-1] 8534575655372394344: 5,000 rows
+
+Total snapshots retained: 10
+
+History (last 3):
+  2026-10-04 08:56:05.839000  snapshot=1472486413461413918
+  2026-10-04 08:56:05.876000  snapshot=2902648803201539988
+  2026-10-04 08:56:05.914000  snapshot=8534575655372394344
+</pre><h3>Cell 23 — execution 12</h3><pre>Partition specs in use across data files: [1, 2]
+Total rows readable across BOTH specs: 5,500
+
+Two layouts, one table, zero rewrites. This is the feature.
+</pre><h3>Cell 25 — execution 13</h3><pre>  [PASS] pruning ratio ≥ 5x
+  [PASS] ≥ 10 snapshots
+  [PASS] field_id stable on rename
+  [PASS] ≥ 2 partition specs
+  [PASS] all rows readable
+
+NB5 complete.
+</pre>

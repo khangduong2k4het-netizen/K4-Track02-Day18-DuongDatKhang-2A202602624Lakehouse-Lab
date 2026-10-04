@@ -155,3 +155,12 @@ assert n_dates >= 7, (
 # - [ ] Silver has fewer rows than Bronze (dedup worked)
 # - [ ] Gold spans ≥ 7 dates × 3 models (slide §8 medallion contract)
 # - [ ] Cost & error_rate columns populated and non-zero
+
+# %%
+assert n_models == 3 and gold_df.height == n_dates * n_models
+assert gold_df.select(pl.struct(["date", "model"]).n_unique()).item() == gold_df.height
+assert gold_df.select((pl.col("p50_latency_ms") <= pl.col("p95_latency_ms")).all()).item()
+assert gold_df.select((pl.col("cost_usd") > 0).all()).item()
+assert gold_df.select(pl.col("error_rate").is_between(0, 1).all()).item()
+assert gold_df.null_count().sum_horizontal().item() == 0
+print("PASS: Gold has every date/model pair, no nulls, p50 <= p95, positive cost, error_rate in [0,1].")

@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><style>body{font:16px Arial;margin:32px;color:#172033}pre{font:14px Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5fa;padding:18px;border:1px solid #d5dce7}h1{color:#174ea6}</style><h1>03_time_travel</h1><p>Browser screenshot of preserved Jupyter execution outputs. Source: submission/notebooks/03_time_travel.ipynb. Local HTML export; not the live Jupyter UI.</p><h3>Cell 4 — execution 2</h3><pre>MERGE 100K rows: 0.08s
+</pre><h3>Cell 6 — execution 3</h3><pre>  v 3  WRITE                      metrics={&#x27;num_added_files&#x27;: 1, &#x27;num_removed_files&#x27;: 0, &#x27;num_partitions&#x27;: 0, &#x27;num_added_rows&#x27;: 50, &#x27;execution_time_ms&#x27;: 1, &#x27;num_retries&#x27;: 0}
+  v 2  MERGE                      metrics={&#x27;num_source_rows&#x27;: 100000, &#x27;num_target_rows_inserted&#x27;: 50000, &#x27;num_target_rows_updated&#x27;: 50000, &#x27;num_target_rows_deleted&#x27;: 0, &#x27;num_target_rows_copied&#x27;: 50000, &#x27;num_output_rows&#x27;: 150000, &#x27;num_target_files_scanned&#x27;: 1, &#x27;num_target_files_skipped_during_scan&#x27;: 0, &#x27;num_target_files_added&#x27;: 1, &#x27;num_target_files_removed&#x27;: 1, &#x27;execution_time_ms&#x27;: 62, &#x27;scan_time_ms&#x27;: 46, &#x27;rewrite_time_ms&#x27;: 6}
+  v 1  WRITE                      metrics={&#x27;num_added_files&#x27;: 1, &#x27;num_removed_files&#x27;: 1, &#x27;num_partitions&#x27;: 0, &#x27;num_added_rows&#x27;: 100000, &#x27;execution_time_ms&#x27;: 14, &#x27;num_retries&#x27;: 0}
+  v 0  WRITE                      metrics={&#x27;num_added_files&#x27;: 1, &#x27;num_removed_files&#x27;: 0, &#x27;num_partitions&#x27;: 0, &#x27;num_added_rows&#x27;: 100000, &#x27;execution_time_ms&#x27;: 14, &#x27;num_retries&#x27;: 0}
+</pre><h3>Cell 8 — execution 4</h3><pre>v0 row count: 100000
+v1 schema:    [&#x27;customer_id&#x27;, &#x27;status&#x27;, &#x27;score&#x27;, &#x27;tier&#x27;]
+</pre><h3>Cell 10 — execution 5</h3><pre>RESTORE → v2: 0.02s   (target &lt; 30s)
+Rows with score&lt;0 after restore: 0  (expected 0)
+</pre><h3>Cell 12 — execution 6</h3><pre>  v 4  RESTORE                  
+  v 3  WRITE                    
+  v 2  MERGE                    
+  v 1  WRITE                    
+  v 0  WRITE                    
+
+Total versions: 5  (target ≥ 5)
+</pre><h3>Cell 14 — execution 7</h3><pre>  [PASS] history ≥ 5 versions
+  [PASS] history includes the RESTORE
+  [PASS] MERGE recorded in history
+  [PASS] bad rows gone after restore
+
+NB3 complete.
+</pre>

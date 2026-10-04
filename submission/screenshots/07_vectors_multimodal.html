@@ -1,0 +1,92 @@
+<!doctype html><meta charset="utf-8"><style>body{font:16px Arial;margin:32px;color:#172033}pre{font:14px Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5fa;padding:18px;border:1px solid #d5dce7}h1{color:#174ea6}</style><h1>07_vectors_multimodal</h1><p>Browser screenshot of preserved Jupyter execution outputs. Source: submission/notebooks/07_vectors_multimodal.ipynb. Local HTML export; not the live Jupyter UI.</p><h3>Cell 2 — execution 1</h3><pre>Corpus: 2,000 docs, embedding dim=256
+Columns: [&#x27;doc_id&#x27;, &#x27;title&#x27;, &#x27;topic&#x27;, &#x27;subject_id&#x27;, &#x27;source&#x27;, &#x27;license&#x27;, &#x27;consent_train&#x27;, &#x27;generator&#x27;, &#x27;blob_uri&#x27;, &#x27;emb&#x27;]
+</pre><h3>Cell 4 — execution 2</h3><pre>inline table :    12.5 MB
+pointer table:     4.7 KB   (+ 12.5 MB of objects alongside)
+
+Total bytes stored is nearly identical — the bytes have to live somewhere.
+The difference is not SIZE. It is what a reader is forced to touch.
+</pre><h3>Cell 6 — execution 3</h3><pre>Bytes read by `SELECT topic, count(*) GROUP BY topic`:
+  inline layout : 1.2 KB  of 12.5 MB total
+  pointer layout: 1.2 KB  of 2.4 KB total
+
+→ The blob column costs the analytical scan essentially NOTHING.
+  Projection pushdown is real. The scary advice is wrong for this case.
+</pre><h3>Cell 8 — execution 4</h3><pre>inline parquet: 1 row group(s), 200 rows, 12.5 MB per group
+
+Fetching ONE frame (doc_id=137):
+  inline  → must read the row group: 12.5 MB
+  pointer → one GET of the object:   64.0 KB
+  → amplification: 200× more bytes than needed
+
+At 1,000 random frame fetches/sec to feed a GPU, that amplification IS
+the GPU-starvation problem. Formats like Lance restructure the file so a
+random read costs ~one row, not one row group.
+</pre><h3>Cell 10 — execution 5</h3><pre>embeddings: 2,000 × 256  (2.0 MB in memory)
+per row: float32 = 1,024 B   int8 = 256 B   (4× smaller)
+at dim=768: float32 = 3,072 B   int8 = 768 B   ← the slide&#x27;s numbers
+
+On disk (Parquet, compressed):
+  float32: 2.6 MB
+  int8   : 451.9 KB   →  5.8× smaller
+</pre><h3>Cell 12 — execution 6</h3><pre>arrow type on read: list&lt;element: float&gt;  → cast to FLOAT[dim] at query time
+This lab casts the variable-length list to a fixed-size DuckDB array before vector queries.
+
+Query doc: storage-note-00007  (topic=storage)
+
+ doc_id  topic           sim  title
+      7  storage       1.000  storage-note-00007
+   1703  storage       0.779  storage-note-01703
+   1200  storage       0.777  storage-note-01200
+    766  storage       0.776  storage-note-00766
+   1250  storage       0.768  storage-note-01250
+
+brute-force scan over 2,000 vectors: 12.9 ms
+</pre><h3>Cell 14 — execution 7</h3><pre>   1703  storage      proprietary   0.779
+   1200  storage      user-owned    0.777
+    766  storage      commercial    0.776
+   1250  storage      user-owned    0.768
+    570  storage      commercial    0.768
+
+No sync job, no ID reconciliation, no &#x27;is this vector still valid?&#x27;
+</pre><h3>Cell 16 — execution 8</h3><pre>       2,000 vectors → ~    12.9 ms   fine
+     100,000 vectors → ~   642.8 ms   borderline
+   1,000,000 vectors → ~  6427.9 ms   NOT a serving path
+
+Rule from the slide: vector DB = a rebuildable DERIVED INDEX.
+                     lakehouse = the SYSTEM-OF-RECORD.
+</pre><h3>Cell 18 — execution 9</h3><pre>recall@10 (exact doc IDs), int8 vs float32: 0.904
+topic fidelity of int8 top-10:              1.000
+storage saved: 83%
+
+→ int8 loses ~10% of exact IDs but 100% of results are still
+  on-topic. The &quot;misses&quot; are swaps between near-equivalent neighbours, which
+  is why exact-ID recall UNDERSTATES quantization quality for RAG.
+  Measure both on YOUR corpus before shipping — the trade is corpus-dependent.
+</pre><h3>Cell 20 — execution 10</h3><pre>External index synced: 2,000 vectors
+</pre><h3>Cell 22 — execution 11</h3><pre>Erasure request for user_042: 8 docs
+lakehouse rows: 2,000 → 1,992
+external index rows: 2,000   ← untouched
+</pre><h3>Cell 24 — execution 12</h3><pre>Erased docs still retrievable from the lakehouse:      0
+Erased docs still retrievable from the external index: 8   ← VIOLATION
+
+The external index will happily return user_042&#x27;s content to a RAG prompt
+until the next sync — and if the sync is one-way upsert (the common case),
+*forever*, because deletes are the operation sync pipelines forget.
+
+</pre><h3>Cell 26 — execution 13</h3><pre>CDF rows since v1: 8   deletes: 8
+Delete events carry the doc_ids to evict: [42, 292, 542, 792, 1042] ...
+
+That is the contract: the index subscribes to deletes instead of guessing.
+Best of all is not needing the sync — keep the vector in the row (§2 above)
+and the lifecycle is enforced by the table itself.
+
+</pre><h3>Cell 28 — execution 14</h3><pre>  [PASS] random-access amplification ≥ 5x
+  [PASS] int8 ≥ 3x smaller
+  [PASS] int8 recall@10 ≥ 0.80
+  [PASS] int8 topic fidelity ≥ 0.95
+  [PASS] top-5 share query topic
+  [PASS] lifecycle bug reproduced
+  [PASS] CDF emits delete events
+
+NB7 complete.
+</pre>

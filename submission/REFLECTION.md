@@ -1,0 +1,3 @@
+Một anti-pattern đáng chú ý với hệ thống RAG là coi external vector index như nguồn dữ liệu chính và chỉ đồng bộ upsert. Trong NB7, xóa 8 tài liệu của một subject khiến bảng còn 1.992 dòng nhưng index cũ vẫn giữ 2.000 vector. Cả 8 tài liệu đã xóa vẫn có thể được truy xuất từ index. Vì vậy, việc xóa ở lakehouse chưa bảo đảm dữ liệu biến mất khỏi kết quả RAG.
+
+Cách phòng tránh là giữ lakehouse làm nguồn dữ liệu chuẩn, coi index là dữ liệu dẫn xuất có thể dựng lại. Pipeline cần xử lý CDF delete theo doc_id, theo dõi độ trễ đồng bộ và kiểm tra truy xuất sau xóa. Với tập nhỏ, truy vấn vector trong bảng giúp đơn giản hóa vòng đời dữ liệu. Với tập lớn, cần thêm kiểm tra version và cơ chế đồng bộ index phù hợp.
